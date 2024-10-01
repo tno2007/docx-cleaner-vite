@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vite + TS</title>
+</head>
+
+<body>
+  <div id="app">
+
+    <trix-toolbar id="my_toolbar"></trix-toolbar>
+    <div class="more-stuff-inbetween"></div>
+    <trix-editor id="editor" toolbar="my_toolbar"></trix-editor>
+    </main>
+
+
+  </div>
+  <script src="/dist/my-lib.umd.js"></script>
+  <link rel="stylesheet" type="text/css" href="./node_modules/trix/dist/trix.css">
+  <script type="text/javascript" src="./node_modules/trix/dist/trix.umd.js"></script>
+  <script>
+
+    var html = "";
+    var rtf = "";
+    var cleanHtml = "";
+
+    document.addEventListener("trix-before-initialize", event => {
+      event.target.addEventListener("paste", event => {
+
+        // event.preventDefault();
+        // console.log("paste event", event.clipboardData);
+
+        html = event.clipboardData.getData('text/html');
+        rtf = event.clipboardData.getData('text/rtf');
+
+        cleanHtml = myLib.cleanDocx(html, rtf);
+
+
+
+
+      })
+
+    })
+
+    document.addEventListener("trix-paste", function (event) {
+
+      console.log("trix-paste event");
+
+      if (event.paste.hasOwnProperty('html')) {
+        // Undo the paste
+        // event.target.editor.undo();
+
+        // Use the range to insert required text
+        event.target.editor.setSelectedRange(event.paste.range);
+        event.target.editor.insertHTML(cleanHtml);
+      }
+
+    })
+
+    function stringToArrayBuffer(string) {
+      const buffer = new ArrayBuffer(string.length);
+      const bufferView = new Uint8Array(buffer);
+      for (let i = 0; i < string.length; i++) {
+        bufferView[i] = string.charCodeAt(i);
+      }
+      return buffer;
+    }
+
+    document.addEventListener('trix-before-paste', function (e) {
+
+      console.log("trix-before-paste event");
+
+
+      if (event.paste.dataTransfer) {
+
+        if (!event.paste.html) return;
+
+        const html = event.paste.html;
+
+        // check if event.paste.dataTransfer.types array has a value called "text/rtf"
+        if (event.paste.dataTransfer.types.includes("text/rtf")) {
+          console.log("text/rtf found");
+
+          // get the text/rtf item from the dataTransfer.items array
+
+          const rtfDataTransferItem = Array.from(event.paste.dataTransfer.items).find(item => item.type === "text/rtf");
+
+
+          //let div = document.createElement("div");
+          //div.innerHTML = e.paste.html;
+          //e.paste.html = `<span style='color: red;'>Hello, World!</span>`;
+
+          rtfDataTransferItem.getAsString(function (rtf) {
+
+            const cleanHtml = myLib.cleanDocx(html, rtf);
+
+            console.log("cleanHtml", cleanHtml);
+
+            e.paste.html = cleanHtml;
+
+
+
+          });
+
+          // const html = convertRtfToHtml(rtf);
+
+          // console.log("html", html);
+
+          // disable RTFJS logging
+          // RTFJS.loggingEnabled(false);
+
+
+          // rtfDataTransferItem.getAsString((rtf) => {
+
+          //   const doc = new RTFJS.Document(stringToArrayBuffer(rtf));
+          //   const meta = doc.metadata();
+          //   doc.render().then(function (htmlElements) {
+
+          //     var divHtml = document.createElement("div");
+          //     divHtml.append(...htmlElements);
+          //     var divHtmlString = divHtml.innerHTML;
+
+          //     e.paste.html = "helloe" + divHtmlString;
+
+          //     console.log("htmlElements", divHtmlString);
+
+          //   })
+          // })
+
+
+        }
+      }
+
+      // if (e.paste.hasOwnProperty('html')) {
+      //   let div = document.createElement("div");
+      //   div.innerHTML = e.paste.html;
+      //   e.paste.html = div.textContent + "modified";
+      // }
+
+      // e.preventDefault();
+    });
+
+
+    function my_input() {
+      console.log("my_input");
+    }
+
+    // const editorElement = document.getElementById("editor")
+    // editorElement.editor.insertString("dedede")
+
+  </script>
+
+</body>
+
+</html>
